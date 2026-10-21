@@ -16,7 +16,6 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx.ext.mathjax",
-    "sphinxcontrib.mermaid",
 ]
 
 # Heavy / optional dependencies are mocked so the API reference builds on Read the Docs

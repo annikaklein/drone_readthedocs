@@ -24,38 +24,13 @@ capture. Georeferencing with ground control points is an optional final step.
 
 ## Flow diagram
 
-```{mermaid}
-flowchart TD
-    raw["<b>0</b> One capture: 4 band TIFFs<br/>(G, R, RE, NIR) + EXIF/XMP metadata"]
-    meta["pyexiftool: all 4 files in one call"] -.-> raw
-    raw --> qual["<b>1</b> Quality filter<br/>RtkFlag = 50 and SurveyingMode = 1"]
-    qual -- fail --> reject["reject capture"]
-    qual -- pass --> sat
+```{figure} figures/pipeline.svg
+:alt: Processing pipeline flow diagram
+:width: 100%
+:align: center
 
-    subgraph perband ["per band"]
-        sat["<b>2</b> Saturation mask from raw DN<br/>DN ≥ 65520 = 4095·16"]
-        norm["<b>3</b> Black level + gain/exposure<br/>(DJI Eq. 9) → L in DN/s"]
-        vig["<b>4</b> Vignetting correction<br/>(DJI Step 1, Eq. 7–8)"]
-        dist["<b>5</b> Lens distortion<br/>(DJI Step 2, DewarpData)"]
-        hom["<b>6</b> Factory homography<br/>(DJI Step 3, CalibratedHMatrix)"]
-        ecc["<b>7</b> Fine alignment to R<br/>Gauss → Sobel → ECC"]
-        sat --> norm --> vig --> dist --> hom --> ecc
-    end
-
-    ecc --> panel["<b>8</b> Mark panel(s), shrink 10 %<br/>→ mean L, saturation %, CV"]
-    cert["Certified panel reflectance<br/>ρ per band"] --> elm
-    panel --> elm["<b>9</b> Empirical Line Method<br/>1-point: ρ = F·L · 2-point: ρ = a·L + b"]
-    elm --> refl["Surface reflectance (0–1) per band"]
-    refl -.-> geo["<b>10</b> Optional: GCP georeferencing<br/>homography/affine, RMSE, leave-one-out"]
-    gcp["GCP CSV (RTK rover)<br/>lon/lat ETRS89 → UTM"] --> geo
-    geo --> final["GeoTIFF: reflectance (4 bands)<br/>ETRS89 / UTM 32N (EPSG:25832)"]
-
-    classDef perb fill:#eaf6ea,stroke:#3b7a3b
-    classDef cal fill:#fdf0e3,stroke:#c0702a
-    classDef geo fill:#fbeaea,stroke:#a33
-    class sat,norm,vig,dist,hom,ecc perb
-    class panel,elm,cert cal
-    class geo,gcp,final geo
+Processing pipeline for one capture. Green: per-band corrections (Steps 2–7);
+orange: panel calibration (Steps 8–9); red: optional georeferencing (Step 10).
 ```
 
 ## Why this order?
